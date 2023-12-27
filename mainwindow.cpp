@@ -54,11 +54,17 @@ MainWindow::MainWindow(QWidget *parent)
         prevValue = y[i];
     }
 
-    // Установка графика сигнала
+    // Установка размеров координатных осей
+    customPlot->xAxis->setRange(0, 20);
+    customPlot->yAxis->setRange(-10, 10);
+
+    // Отображение графика сигнала
     customPlot->addGraph();
     customPlot->graph(0)->setData(x, y);
+    customPlot->xAxis->setLabel("Время");
+    customPlot->yAxis->setLabel("Значение");
 
-    // Установка периода сигнала
+    // Выделение периода сигнала
     if (period > 0) {
         customPlot->addGraph();
         QVector<double> periodX, periodY;
@@ -71,10 +77,5 @@ MainWindow::MainWindow(QWidget *parent)
         customPlot->graph(1)->setPen(QPen(QColor(0, 255, 0)));
     }
 
-    // Установка размеров координатных осей
-    customPlot->xAxis->setRange(0, 20);
-    customPlot->yAxis->setRange(-10, 10);
-
-    // Отображение графика
     customPlot->replot();
 }
