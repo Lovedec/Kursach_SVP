@@ -1,80 +1,80 @@
 #include "mainwindow.h"
 #include <QFile>
 #include <QVector>
+#include <QMessageBox>
+#include <QTextStream>
+#include <QFileDialog>
+#include "qcustomplot.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     customPlot = new QCustomPlot(this);
-    customPlot->setMinimumSize(800, 600);
-    customPlot->setWindowTitle("Дискретный сигнал");
+    customPlot->setGeometry(50, 50, 700, 500);
+    setCentralWidget(customPlot);
+
+    // Выбор файла данных
+    QString fileName = QFileDialog::getOpenFileName(this, "Выберите файл данных", "", "Текстовые файлы (*.txt)");
+    if (fileName.isEmpty())
+    {
+        QMessageBox::critical(this, "Ошибка", "Файл не выбран.");
+        exit(0);
+    }
 
     // Загрузка данных из файла
-    QFile file("sign4.txt");
+    QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         QMessageBox::critical(this, "Ошибка", "Не удалось открыть файл.");
         exit(0);
     }
-    QTextStream in(&file);
+
     QVector<double> x, y;
-    int i = 0;
+    QTextStream in(&file);
+    double value;
+    int index = 0;
     while (!in.atEnd())
     {
-        double val;
-        in >> val;
-        x.append(i);
-        y.append(val);
-        i++;
+        in >> value;
+        x.append(index);
+        y.append(value);
+        index++;
     }
-    file.close();
 
     // Вычисление периода сигнала
     int period = 0;
-    int peakIndex = 0;
-    double peakValue = y[0];
-    for (int j = 1; j < y.size(); j++)
+    double prevValue = y[0];
+    for (int i = 1; i < x.size(); i++)
     {
-        if (y[j] > peakValue)
+        if ((prevValue >= 0 && y[i] < 0) || (prevValue < 0 && y[i] >= 0))
         {
-            peakValue = y[j];
-            peakIndex = j;
-        }
-    }
-
-    for (int j = peakIndex + 1; j < y.size(); j++)
-    {
-        if (y[j] < peakValue)
-        {
-            period = j - peakIndex;
+            period = i;
             break;
         }
+        prevValue = y[i];
     }
 
-    // Отображение графика
+    // Установка графика сигнала
     customPlot->addGraph();
     customPlot->graph(0)->setData(x, y);
-    customPlot->xAxis->setLabel("Время");
-    customPlot->yAxis->setLabel("Значение");
 
-    // Выделение периодического участка
-    if (period != 0) {
-        QVector<double> periodX, periodY;
-        for (int j = 0; j < x.size(); j += period)
-        {
-            periodX.append(x[j]);
-            periodY.append(y[j]);
-        }
+    // Установка периода сигнала
+    if (period > 0) {
         customPlot->addGraph();
+        QVector<double> periodX, periodY;
+        for (int i = 0; i < period; i++)
+        {
+            periodX.append(x[i]);
+            periodY.append(y[i] - y[0]);
+        }
         customPlot->graph(1)->setData(periodX, periodY);
-        customPlot->graph(1)->setPen(QPen(Qt::green));
+        customPlot->graph(1)->setPen(QPen(QColor(0, 255, 0)));
     }
 
-    customPlot->replot();
-    setCentralWidget(customPlot);
-}
+    // Установка размеров координатных осей
+    customPlot->xAxis->setRange(0, 20);
+    customPlot->yAxis->setRange(-10, 10);
 
-MainWindow::~MainWindow()
-{
-    delete customPlot;
+    // Отображение графика
+    customPlot->replot();
 }
