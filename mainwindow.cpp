@@ -68,7 +68,7 @@ MainWindow::MainWindow(QWidget *parent)
     if (period > 0) {
         customPlot->addGraph();
         QVector<double> periodX, periodY;
-        for (int i = 0; i < period; i++)
+        for (int i = 0; i < period*2-1; i++)
         {
             periodX.append(x[i]);
             periodY.append(y[i] - y[0]);
@@ -76,6 +76,5 @@ MainWindow::MainWindow(QWidget *parent)
         customPlot->graph(1)->setData(periodX, periodY);
         customPlot->graph(1)->setPen(QPen(QColor(0, 255, 0)));
     }
-
     customPlot->replot();
 }
